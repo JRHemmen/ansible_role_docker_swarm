@@ -1,0 +1,10 @@
+---
+# Runs once per network, from the swarm master
+- name: Configure network for {{ item }}
+  community.docker.docker_network:
+    name: "{{ item }}"
+    driver: "overlay"
+    scope: "swarm"
+    attachable: yes
+  delegate_to: "{{ groups.docker[0] }}"
+  run_once: true

@@ -1,0 +1,41 @@
+---
+# Need to find a module that can do this rather than just running a command
+# This step is required for VMs only (need to confirm). Make toggle?
+- name: Disable transmit checksum offloading to hosts' virtual interface
+  ansible.builtin.command: ethtool -K ens192 tx-checksum-ip-generic off
+
+- name: Open TCP ports required for mesh ingress
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_ports:
+      - "7946"
+      - "2377"
+    jump: ACCEPT
+
+- name: Open UDP ports required for mesh ingress
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: udp
+    destination_ports:
+      - "7946"
+      - "4789"
+    jump: ACCEPT
+
+- name: Open esp ports required for mesh ingress
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: esp
+    jump: ACCEPT
+
+- name: Open esp ports inbound required for mesh ingress
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: esp
+    jump: ACCEPT
+
+- name: Open esp ports outbound required for mesh ingress
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: esp
+    jump: ACCEPT

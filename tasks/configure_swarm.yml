@@ -1,0 +1,56 @@
+---
+# Gathers info about current swarm (from swarm master, 1st host in docker group)
+# If the swarm does not exist yet, this step will fail
+# (this is expected), so ignoring errors
+# Runs once as the variable only needs to be declared once
+- name: Check if swarm is already created
+  community.docker.docker_swarm_info:
+    nodes: yes
+  register: swarm_info
+  run_once: true
+  ignore_errors: true
+  delegate_to: "{{ groups.docker[0] }}"
+
+# Creates a docker swarm from the master node
+# Uses advertised address of the node's IP address
+# Overwrites swarm_info with info about the new swarm
+# Only runs once, from the master node
+# Only runs when swarm info was null OR the host was part of an inactive swarm
+- name: Bootstrap docker swarm
+  community.docker.docker_swarm:
+    state: present
+    advertise_addr: "{{ ansible_default_ipv4.address }}"
+    debug: yes
+  register: swarm_info
+  run_once: true
+  delegate_to: "{{ groups.docker[0] }}"
+  when: not swarm_info.docker_swarm_active or swarm_info.docker_swarm_active is not defined
+
+# Regather swarm info to add join tokens to swarm_info
+- name: Gather tokens from bootstrapped swarm
+  community.docker.docker_swarm_info:
+    nodes: yes
+  register: swarm_info
+  run_once: true
+  delegate_to: "{{ groups.docker[0] }}"
+
+# Join a node to the cluster (only runs when host_vars has swarm_master defined as true)
+# Remote address of the cluster to join is the default IP address of the first host in the docker group
+# Manager Join token is provided from swarm_info above, advertise address is the ip address of the node to be added
+- name: Add swarm masters to bootstrapped cluster
+  community.docker.docker_swarm:
+    state: join
+    debug: yes
+    remote_addrs: "{{ hostvars[groups.docker[0]]['ansible_default_ipv4']['address'] }}"
+    join_token: "{{ swarm_info.swarm_facts.JoinTokens.Manager }}"
+    advertise_addr: "{{ ansible_default_ipv4.address }}"
+  when: swarm_master and swarm_master is defined
+
+# Same as previous step, using the worker join token on the remaining hosts
+- name: Add other swarm workers to bootstrapped cluster
+  community.docker.docker_swarm:
+    state: join
+    remote_addrs: "{{ hostvars[groups.docker[0]]['ansible_default_ipv4']['address'] }}"
+    join_token: "{{ swarm_info.swarm_facts.JoinTokens.Worker }}"
+    advertise_addr: "{{ ansible_default_ipv4.address }}"
+  when: not swarm_master or swarm_master is not defined

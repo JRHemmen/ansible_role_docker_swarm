@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: docker_swarm_node
+  author: James Hemmen
+  description: A role to install docker and initialize a swarm.
+
+  license: "GPLv3"
+
+  min_ansible_version: "2.13"
+
+  platforms:
+    - name: Debian
+      versions:
+        - "bullseye"
+
+  galaxy_tags:
+    - docker
+    - swarm
+    - containerd
+    - mesh
+
+dependencies: []
