@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: docker_swarm_node
+  role_name: docker_swarm
   author: James Hemmen
   description: A role to install docker and initialize a swarm.
 
