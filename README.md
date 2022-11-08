@@ -29,7 +29,8 @@ Role Variables
 Dependencies
 ------------
 
-None.
+    Collections:
+      - community.docker
 
 Example Playbook
 ----------------
